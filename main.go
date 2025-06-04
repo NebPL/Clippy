@@ -6,6 +6,7 @@ import (
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v2/pkg/options/mac"
 )
 
 //go:embed all:frontend/dist
@@ -18,13 +19,21 @@ func main() {
 	// Create application with options
 	err := wails.Run(&options.App{
 		Title:  "PR-Clippy",
-		Width:  1024,
-		Height: 768,
+		Width:  750,
+		Height: 450,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
-		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
-		OnStartup:        app.startup,
+		BackgroundColour: &options.RGBA{R: 0, G: 0, B: 0, A: 0},
+		Frameless:        true,
+		Mac: &mac.Options{
+			// Macht das Webview selbst transparent, wenn CSS rgba(0,0,0,0) benutzt wird
+			WebviewIsTransparent: true,
+			// Sorgt dafür, dass das Fenster (inkl. Titlebar) transluzent ist
+			WindowIsTranslucent: true,
+		},
+
+		OnStartup: app.startup,
 		Bind: []interface{}{
 			app,
 		},
