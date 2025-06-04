@@ -30,7 +30,7 @@ func main() {
 			// Macht das Webview selbst transparent, wenn CSS rgba(0,0,0,0) benutzt wird
 			WebviewIsTransparent: true,
 			// Sorgt dafür, dass das Fenster (inkl. Titlebar) transluzent ist
-			WindowIsTranslucent: true,
+			//WindowIsTranslucent: true,
 		},
 
 		OnStartup: app.startup,
