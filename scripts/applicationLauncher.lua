@@ -6,18 +6,17 @@ local handle = io.popen('find "' .. applicationsDir .. '" -maxdepth 1 -name "*.a
 if not handle then return end
 
 for line in handle:lines() do
-    local appPath = line
-    local appName = appPath:match(".*/(.*)%.app$")
-    
-    if appName and appName:lower():find(input, 1, true) then
-        local clicked = addItem(appName, appPath)
+  local appPath = line
+  local appName = appPath:match(".*/(.*)%.app$")
 
-        if clicked then
-            -- App starten über `open`
-            os.execute('open "' .. appPath .. '"')
-        end
+  if appName and appName:lower():find(input, 1, true) then
+    local clicked = addItem(appName, appPath)
+
+    if clicked then
+      -- App starten über `open`
+      os.execute('open "' .. appPath .. '"')
     end
+  end
 end
 
 handle:close()
-

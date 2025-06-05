@@ -2,213 +2,288 @@
   import { ParseInput } from "../wailsjs/go/main/App.js";
   import { ClickItemContainer } from "../wailsjs/go/main/App.js";
 
-  let inputField;
+  let inputField = "";
+  let results = [];
 
-  async function parseInput() {
-    const ol = document.getElementById("ItemContainers");
-    ol.innerHTML = "";
-
-    const result = await ParseInput(inputField);
-
-    for (let i = 0; i < result.length; i++) {
-      addToOl(result[i].title, result[i].subtitle, result[i].index);
-    }
+  // Debounce parseInput to avoid calling it on every keystroke immediately
+  let debounceTimer;
+  async function handleInput() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(async () => {
+      if (inputField.trim() === "") {
+        results = [];
+        return;
+      }
+      results = await ParseInput(inputField);
+    }, 250); // Adjust debounce delay as needed (e.g., 250ms)
   }
 
-  function addToOl(title, subtitle, index) {
-    const ol = document.getElementById("ItemContainers");
-    const newLi = document.createElement("li");
-    newLi.className = "result-item";
-
-    const containerDiv = document.createElement("div");
-    containerDiv.className = "result-content";
-
-    const titleSpan = document.createElement("h3");
-    titleSpan.className = "result-title";
-    titleSpan.textContent = title;
-
-    const subtitleSpan = document.createElement("p");
-    subtitleSpan.className = "result-subtitle";
-    subtitleSpan.textContent = subtitle;
-
-    containerDiv.appendChild(titleSpan);
-    containerDiv.appendChild(subtitleSpan);
-
-    containerDiv.addEventListener("click", () => {
-      ClickItemContainer(index);
-    });
-
-    newLi.appendChild(containerDiv);
-    ol.appendChild(newLi);
+  function handleClick(index) {
+    ClickItemContainer(index);
+    // Optionally clear input and results after click
+    // inputField = "";
+    // results = [];
   }
+
+  // Example data for testing purposes if App.js is not available
+  // setTimeout(() => {
+  //   results = [
+  //     { index: 0, title: "Visual Studio Code", subtitle: "Code editor by Microsoft", type: "Application" },
+  //     { index: 1, title: "Terminal", subtitle: "Open a new terminal window", type: "Command" },
+  //     { index: 2, title: "Firefox", subtitle: "Web browser by Mozilla", type: "Application" },
+  //     { index: 3, title: "System Settings", subtitle: "Configure your system", type: "Application" },
+  //     { index: 4, title: "Long Application Name That Might Overflow", subtitle: "A very descriptive subtitle for this application to test text overflow properties properly.", type: "Application" },
+  //     { index: 5, title: "Calculator", subtitle: "Perform calculations", type: "Application" },
+  //     { index: 6, title: "ls -la", subtitle: "List directory contents", type: "Command" },
+  //     { index: 7, title: "Photos", subtitle: "View your image library", type: "Application" },
+  //     { index: 8, title: "Notes", subtitle: "Jot down your thoughts", type: "Application" },
+  //     { index: 9, title: "Another Item", subtitle: "Subtitle for another item", type: "Command"},
+  //     { index: 10, title: "Yet Another App", subtitle: "A cool application", type: "Application"},
+  //     { index: 11, title: "Final Command", subtitle: "The last command in this list", type: "Command"}
+  //   ];
+  // }, 500);
 </script>
 
 <main class="container">
   <div class="launcher-box">
-    <div class="input-box" id="input">
-      <input
-        autocomplete="off"
-        autocorrect="off"
-        bind:value={inputField}
-        class="input"
-        id="InputField"
-        type="text"
-        on:input={parseInput}
-        placeholder="Type to search..."
-      />
-    </div>
+    <div class="main-content-area">
+      <div class="input-container-sticky">
+        <div class="input-box">
+          <input
+            autocomplete="off"
+            autocorrect="off"
+            spellcheck="false"
+            bind:value={inputField}
+            class="input"
+            id="InputField"
+            type="text"
+            on:input={handleInput}
+            placeholder="Search for apps and commands..."
+          />
+        </div>
+        <!-- <div class="top-right-buttons"></div> -->
+      </div>
 
-    <ol id="ItemContainers" class="results"></ol>
+      <div class="scrollable-results-area">
+        {#if results.length > 0}
+          <ol class="results">
+            {#each results as item (item.index)}
+              <li
+                class="result-item"
+                on:click={() => handleClick(item.index)}
+                tabindex="0"
+                on:keydown={(e) => e.key === "Enter" && handleClick(item.index)}
+              >
+                <div class="result-icon">
+                  <span class="icon-placeholder"
+                    >{item.type === "Application" ? "🚀" : "❯_"}</span
+                  >
+                </div>
+                <div class="result-text-content">
+                  <span class="result-title" title={item.title}
+                    >{item.title}</span
+                  >
+                  <span class="result-subtitle" title={item.subtitle}
+                    >{item.subtitle}</span
+                  >
+                </div>
+                {#if item.type === "Application"}
+                  <span class="result-type app">App</span>
+                {:else if item.type === "Command"}
+                  <span class="result-type cmd">Cmd</span>
+                {/if}
+              </li>
+            {/each}
+          </ol>
+        {:else if inputField.trim() !== ""}
+          <div class="no-results">No results found for "{inputField}"</div>
+        {/if}
+      </div>
+    </div>
   </div>
 </main>
 
 <style>
-  :root {
-    font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-    font-size: 16px;
-    line-height: 1.5;
-    font-weight: 400;
-    color: white;
-    background-color: transparent;
-
-    font-synthesis: none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  body {
+  :global(body) {
     margin: 0;
     padding: 0;
-    background-color: transparent;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+      Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    background-color: #1a1a1a; /* Even darker page background */
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh;
+    color: #f0f0f0; /* Lighter base text color for contrast */
+  }
+
+  .container {
+    /* Container for the launcher */
+  }
+
+  .launcher-box {
+    width: 750px;
+    height: 450px;
+    background-color: #282828; /* Darker launcher background */
+    border-radius: 12px; /* Slightly more rounded corners */
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35); /* Adjusted shadow for darker theme */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #383838; /* Darker border */
+  }
+
+  .main-content-area {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
     overflow: hidden;
   }
 
-  /* Container mit fixierter Größe */
-  .container {
-    width: 750px;
-    height: 450px;
-    box-sizing: border-box;
-    padding: 1rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  .input-container-sticky {
+    padding: 16px;
+    background-color: #282828; /* Match darker launcher background */
+    border-bottom: 1px solid #383838; /* Darker separator line */
   }
 
-  /* Launcher Box füllt Container aus */
-  .launcher-box {
+  .input {
     width: 100%;
-    height: 100%;
-    background-color: #1a1a1a;
-    border-radius: 16px;
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
-    display: flex;
-    flex-direction: column;
-    gap: 0.8rem;
-    padding: 1rem 1.5rem;
+    padding: 12px 15px;
+    font-size: 1rem;
+    background-color: #1e1e1e; /* Very dark input background */
+    color: #f0f0f0; /* Light text color */
+    border: 1px solid #484848; /* Darker border for input */
+    border-radius: 8px; /* More rounded input field */
     box-sizing: border-box;
-  }
-
-  /* Input-Feld */
-  input {
-    width: 100%;
-    border-radius: 8px;
-    border: 1px solid #333;
-    padding: 0.9em 1.2em;
-    font-size: 1.2em;
-    font-weight: 600;
-    background-color: #121212;
-    color: white;
     outline: none;
-    box-sizing: border-box;
-    transition: border-color 0.3s;
-  }
-
-  input::placeholder {
-    color: #666;
-  }
-
-  input:focus {
-    border-color: #555;
-  }
-
-  /* Ergebnisliste ohne Scrollbar und bündig nach links */
-  .results {
-    flex: 1;
-    overflow-y: hidden; /* Scrollbar entfernen */
-    display: flex;
-    flex-direction: column;
-    gap: 0.7rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    /* Folgende Scrollbar-Regeln sind jetzt redundant, können aber zur Sicherheit bleiben, falls overflow-y: auto später wieder aktiviert wird */
-    scrollbar-width: none; /* Für Firefox */
-  }
-
-  .results::-webkit-scrollbar {
-    display: none; /* Für Webkit-Browser (Chrome, Safari) */
-  }
-
-  /* Eintrag */
-  .result-item {
-    width: 100%;
-    background-color: #121212;
-    border-radius: 12px;
-    padding: 1rem 1.2rem;
-    color: white;
-    display: flex;
-    justify-content: flex-start; /* Inhalt des result-item nach links ausrichten */
-    align-items: flex-start; /* Nach links oben ausrichten */
-    cursor: pointer;
-    box-sizing: border-box;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.8); /* dunklerer Schatten */
-    border: 1px solid #222; /* dunklerer Rand */
     transition:
-      background-color 0.2s ease,
-      box-shadow 0.3s ease,
-      border-color 0.3s ease;
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
   }
 
-  .result-item:hover {
-    background-color: #2b2b2b;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 1);
-    border-color: #444;
+  .input:focus {
+    border-color: #007aff; /* Keep focus color for visibility */
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.25); /* Slightly adjusted focus glow */
   }
 
-  .result-content {
+  .input::placeholder {
+    color: #777777; /* Adjusted placeholder color for dark theme */
+  }
+
+  .scrollable-results-area {
+    flex-grow: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0px 8px 8px 8px; /* Adjusted padding, no top padding for results list itself */
+    background-color: #222222; /* Darker results background */
+
+    /* Raycast-like scrollbar for WebKit browsers (Chrome, Safari, Edge) */
+    scrollbar-width: thin; /* For Firefox */
+    scrollbar-color: #555555 #222222; /* thumb track for Firefox */
+  }
+
+  .scrollable-results-area::-webkit-scrollbar {
+    width: 6px; /* Thin scrollbar */
+  }
+
+  .scrollable-results-area::-webkit-scrollbar-track {
+    background: #222222; /* Match results area background */
+    border-radius: 3px;
+  }
+
+  .scrollable-results-area::-webkit-scrollbar-thumb {
+    background-color: #555555; /* Scrollbar thumb color */
+    border-radius: 3px;
+    border: 1px solid #222222; /* Border to match track, creating an inset look */
+  }
+
+  .scrollable-results-area::-webkit-scrollbar-thumb:hover {
+    background-color: #666666; /* Slightly lighter on hover */
+  }
+
+  .results {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .result-item {
     display: flex;
-    flex-direction: column;
-    justify-content: flex-start; /* Vertikale Ausrichtung oben */
-    align-items: flex-start; /* Horizontale Ausrichtung links */
-    text-align: left;
-    width: 100%; /* Sicherstellen, dass es den verfügbaren Platz einnimmt */
+    align-items: center;
+    padding: 10px 12px; /* Adjusted padding */
+    border-bottom: 1px solid #333333; /* Darker item separator */
+    cursor: pointer;
+    transition: background-color 0.1s ease; /* Faster transition */
+    border-radius: 6px;
+    margin: 4px 0; /* Add some vertical margin between items */
   }
 
-  /* Titel */
+  .result-item:last-child {
+    border-bottom: none;
+  }
+
+  .result-item:hover,
+  .result-item:focus {
+    background-color: #3a3a3a; /* Darker hover/focus state */
+    outline: none;
+  }
+
+  .result-icon {
+    margin-right: 14px; /* Slightly more space */
+    font-size: 1.4rem;
+    width: 24px;
+    text-align: center;
+    color: #c0c0c0; /* Lighter icon color */
+  }
+
+  .result-text-content {
+    flex-grow: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-width: 0;
+  }
+
   .result-title {
-    font-weight: 700;
-    font-size: 1.2em;
-    margin-bottom: 0.25rem;
-    color: #f0f0f0;
+    font-weight: 500;
+    color: #f0f0f0; /* Lighter title text */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 10px;
   }
 
-  /* Untertitel */
   .result-subtitle {
-    font-size: 0.95em;
-    color: #aaa;
-    user-select: none;
+    color: #909090; /* Adjusted subtitle color */
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: right;
+    flex-shrink: 0;
   }
 
-  /* Dark Mode fallback */
-  @media (prefers-color-scheme: dark) {
-    :root {
-      color: white;
-      background-color: transparent;
-    }
+  .result-type {
+    margin-left: 12px; /* Slightly more space */
+    font-size: 0.75rem;
+    color: #ffffff;
+    padding: 3px 8px; /* Slightly more padding */
+    border-radius: 5px; /* More rounded type tag */
+    white-space: nowrap;
+  }
+
+  .result-type.app {
+    background-color: #007aff; /* Keep distinct colors */
+  }
+
+  .result-type.cmd {
+    background-color: #34c759;
+  }
+
+  .no-results {
+    padding: 25px; /* More padding */
+    text-align: center;
+    color: #888888; /* Adjusted no-results text color */
+    font-style: italic;
   }
 </style>

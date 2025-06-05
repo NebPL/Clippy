@@ -5,6 +5,7 @@ go 1.23
 require (
 	github.com/wailsapp/wails/v2 v2.10.1
 	github.com/yuin/gopher-lua v1.1.1
+	golang.design/x/hotkey v0.4.1
 )
 
 require (
